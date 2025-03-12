@@ -72,6 +72,9 @@
             <div class="status">
                 <p id="ffmpeg-status1">FFmpeg 状态: 未知</p>
             </div>
+            <div class="ffmpeg-details">
+                <p>分辨率: <span id="ffmpeg-resolution1">未知</span> | 帧率: <span id="ffmpeg-fps1">未知</span> | 码率: <span id="ffmpeg-bitrate1">未知</span> kbps</p>
+            </div>
         </div>
         <div class="control-group">
             <iframe src="http://127.0.0.1:8889/stream2/"></iframe>
@@ -93,14 +96,19 @@
             <div class="status">
                 <p id="ffmpeg-status2">FFmpeg 状态: 未知</p>
             </div>
+            <div class="ffmpeg-details">
+                <p>分辨率: <span id="ffmpeg-resolution2">未知</span> | 帧率: <span id="ffmpeg-fps2">未知</span> | 码率: <span id="ffmpeg-bitrate2">未知</span> kbps</p>
+            </div>
         </div>
     </div>
     <div class="recording-controls">
         <label for="recording-time">录制时间间隔(分钟):</label>
         <input type="number" id="recording-time" value="1">
-        <button id="start-recording" onclick="startRecording()">启动录制</button>
-        <button id="stop-recording" onclick="stopRecording()">停止录制</button>
-        <p id="recording-status">录制状态: 未录制</p>
+        <button id="start-recording-wlan" onclick="startRecordingWlan()">启动录制(网口)</button>
+        <button id="start-recording-serial" onclick="startRecordingSerial()">启动录制(串口)</button>
+        <button id="stop-recording-wlan" onclick="stopRecordingWlan()">停止录制(网口)</button>
+        <button id="stop-recording-serial" onclick="stopRecordingSerial()">停止录制(串口)</button>
+        <p id="recording-status">录制状态: 未知</p>
     </div>
     <div class="controls">
         <label for="datetime">上位机时间:</label>
@@ -145,6 +153,27 @@
                 .catch((error) => {
                     console.error('Error:', error);
                 });
+        }
+
+        function updateDetials() {
+            fetch('http://127.0.0.1:6060/stats')
+            .then(response => response.json())
+            .then(data => {
+                // stream1 信息更新
+                const stream1 = data.stream1 || {};
+                document.getElementById('ffmpeg-resolution1').innerText = stream1.resolution || "未知";
+                document.getElementById('ffmpeg-fps1').innerText = stream1.frame_rate || "未知";
+                document.getElementById('ffmpeg-bitrate1').innerText = stream1.bitrate || "未知";
+                
+                // stream2 信息更新
+                const stream2 = data.stream2 || {};
+                document.getElementById('ffmpeg-resolution2').innerText = stream2.resolution || "未知";
+                document.getElementById('ffmpeg-fps2').innerText = stream2.frame_rate || "未知";
+                document.getElementById('ffmpeg-bitrate2').innerText = stream2.bitrate || "未知";
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
         }
 
         function setControlsState(stream, isRunning) {
@@ -245,7 +274,7 @@
             }
         }
 
-        function startRecording() {
+        function startRecordingWlan() {
             const duration = document.getElementById('recording-time').value * 60; // 将分钟转换为秒
             fetch('http://192.168.137.18:5000/start_recording', {
                 method: 'POST',
@@ -264,7 +293,7 @@
             });
         }
 
-        function stopRecording() {
+        function stopRecordingWlan() {
             fetch('http://192.168.137.18:5000/stop_recording', {
                 method: 'POST'
             })
@@ -278,12 +307,24 @@
             });
         }
 
+        function startRecordingSerial() {
+            const duration = document.getElementById('recording-time').value * 60; // 将分钟转换为秒
+            const message = JSON.stringify({ command: "start_recording", duration });
+            sendToQtSerialPort(message);
+        }
+
+        function stopRecordingSerial() {
+            const message = JSON.stringify({ command: "stop_recording" });
+            sendToQtSerialPort(message);
+        }
+
         function updateRecordingStatus() {
             fetch('http://192.168.137.18:5000/recording_status')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('recording-status').innerText = `录制状态: ${data.status}`;
-                    document.getElementById('start-recording').disabled = data.status === '录制中';
+                    document.getElementById('start-recording-wlan').disabled = data.status === '录制中';
+                    document.getElementById('start-recording-serial').disabled = data.status === '录制中';
                 })
                 .catch((error) => {
                     console.error('Error:', error);
@@ -325,6 +366,7 @@
         updateBitrateOptions('2');
         // 每隔一秒更新状态
         setInterval(updateStatus, 1000);
+        setInterval(updateDetials, 1000);
         setInterval(getCurrentTime, 1000);
         setInterval(updateRecordingStatus, 1000);
     </script>

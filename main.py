@@ -15,6 +15,7 @@ from common.signal_bus import signalBus
 from SettingUI import SettingInterface
 
 from WebPage import WebViewer
+from ffmpeg_stats import FFmpegStatsApp
 
 # Window class inherits from FluentWindow and serves as the main application window
 class Window(FluentWindow):
@@ -114,9 +115,19 @@ if __name__ == '__main__':
 
     app.installTranslator(translator)
 
+    # create a new thread to run FFmpegStatsApp
+    import threading
+    def run_ffmpeg_stats_app():
+        ffmpegStatsApp = FFmpegStatsApp()
+        ffmpegStatsApp.start()
+
+    ffmpeg_thread = threading.Thread(target=run_ffmpeg_stats_app)
+    ffmpeg_thread.daemon = True
+    ffmpeg_thread.start()
+
     # create main window
     w = Window()
     w.show()
     w.setWindowState(Qt.WindowState.WindowMaximized) #全屏最大化
-
+    
     app.exec()

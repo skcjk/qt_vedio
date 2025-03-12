@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .iframe-container {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+        iframe {
+            width: 100%;
+            height: 800px;
+            margin: 10px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin-top: 20px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 48%;
+        }
+        .control-group .controls {
+            justify-content: center;
+        }
+        .status {
+            margin-top: 20px;
+        }
+        .recording-controls {
+            display: flex;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .recording-controls label,
+        .recording-controls input,
+        .recording-controls button {
+            margin-right: 10px;
+            height: 30px;
+        }
+    </style>
+    <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
+</head>
+<body>
+    <div class="iframe-container">
+        <div class="control-group">
+            <iframe src="http://192.168.137.18:8889/stream1/"></iframe>
+            <div class="controls">
+                <label for="resolution1">网络通信 分辨率:</label>
+                <select id="resolution1" onchange="updateBitrateOptions('1')">
+                    <option value="1920x1080">1920x1080(16:9,硬件加速)</option>
+                    <option value="1280x720">1280x720(16:9,硬件加速)</option>
+                </select>
+                <label for="bitrate1">码率:</label>
+                <select id="bitrate1">
+                    <!-- 码率选项将由JavaScript更新 -->
+                </select>
+                <button id="start1" onclick="startFFmpeg('stream1')">启动</button>
+                <button onclick="stopFFmpeg('stream1')">停止</button>
+            </div>
+            <div class="status">
+                <p id="ffmpeg-status1">FFmpeg 状态: 未知</p>
+            </div>
+        </div>
+        <div class="control-group">
+            <iframe src="http://127.0.0.1:8889/stream2/"></iframe>
+            <div class="controls">
+                <label for="resolution2">串口通信 分辨率:</label>
+                <select id="resolution2" onchange="updateBitrateOptions('2')">
+                    <option value="320x180">320x180(16:9,硬件加速)</option>
+                    <option value="320x240">320x240(4:3,无加速,不推荐)</option>
+                    <option value="256x144">256x144(16:9,无加速,不推荐)</option>
+                    <option value="256x128">256x128(2:1,无加速,不推荐)</option>
+                </select>
+                <label for="bitrate2">码率:</label>
+                <select id="bitrate2">
+                    <!-- 码率选项将由JavaScript更新 -->
+                </select>
+                <button id="start2" onclick="startFFmpeg('stream2')">启动</button>
+                <button onclick="stopFFmpeg('stream2')">停止</button>
+            </div>
+            <div class="status">
+                <p id="ffmpeg-status2">FFmpeg 状态: 未知</p>
+            </div>
+        </div>
+    </div>
+    <div class="recording-controls">
+        <label for="recording-time">录制时间间隔(分钟):</label>
+        <input type="number" id="recording-time" value="1">
+        <button id="start-recording" onclick="startRecording()">启动录制</button>
+        <button id="stop-recording" onclick="stopRecording()">停止录制</button>
+        <p id="recording-status">录制状态: 未录制</p>
+    </div>
+    <div class="controls">
+        <label for="datetime">上位机时间:</label>
+        <input type="datetime-local" id="datetime" readonly>
+        <button onclick="syncTime()">同步时间</button>
+    </div>
+    <div class="controls">
+        <button onclick="shutdown()">关机</button>
+        <button onclick="reboot()">重启</button>
+    </div>
+    <script>
+        const bitrateOptions = {
+            '1920x1080': ['8M', '4M'],
+            '1280x720': ['2M', '1M'],
+            '320x180': ['80k', '40k'],
+            '320x240': ['80k', '40k'],
+            '256x144': ['80k', '40k', '20k', '10k'],
+            '256x128': ['80k', '40k', '20k', '10k']
+        };
+
+        function updateBitrateOptions(stream) {
+            const resolution = document.getElementById(`resolution${stream}`).value;
+            const bitrateSelect = document.getElementById(`bitrate${stream}`);
+            bitrateSelect.innerHTML = '';
+            bitrateOptions[resolution].forEach(bitrate => {
+                const option = document.createElement('option');
+                option.value = bitrate;
+                option.text = bitrate;
+                bitrateSelect.add(option);
+            });
+        }
+
+        function updateStatus() {
+            fetch('http://192.168.137.18:5000/status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('ffmpeg-status1').innerText = `FFmpeg 状态: ${data.stream1}`;
+                    document.getElementById('ffmpeg-status2').innerText = `FFmpeg 状态: ${data.stream2}`;
+                    setControlsState('1', data.stream1 === 'running');
+                    setControlsState('2', data.stream2 === 'running');
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function setControlsState(stream, isRunning) {
+            document.getElementById(`resolution${stream}`).disabled = isRunning;
+            document.getElementById(`bitrate${stream}`).disabled = isRunning;
+            document.getElementById(`start${stream}`).disabled = isRunning;
+        }
+
+        function startFFmpeg(stream) {
+            if (stream === 'stream2') {
+                const resolution = document.getElementById('resolution2').value;
+                const bitrate = document.getElementById('bitrate2').value;
+                const message = JSON.stringify({ command: "start", resolution, bitrate });
+                sendToQtSerialPort(message);
+            } else {
+                const resolution = document.getElementById('resolution1').value;
+                const bitrate = document.getElementById('bitrate1').value;
+                fetch(`http://192.168.137.18:5000/start/${stream}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ resolution, bitrate })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    updateStatus();
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        function stopFFmpeg(stream) {
+            if (stream === 'stream2') {
+                const message = JSON.stringify({ command: "stop" });
+                sendToQtSerialPort(message);
+            } else {
+                fetch(`http://192.168.137.18:5000/stop/${stream}`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Success:', data);
+                    updateStatus();
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+            }
+        }
+
+        function sendToQtSerialPort(message) {
+            if (window.qt && window.qt.webChannelTransport) {
+                new QWebChannel(window.qt.webChannelTransport, function(channel) {
+                    channel.objects.serialPort.send(message);
+                });
+            } else {
+                console.error('Qt WebChannel is not available.');
+            }
+        }
+
+        function getCurrentTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+            document.getElementById('datetime').value = datetimeLocal;
+        }
+
+        function syncTime() {
+            const datetime = document.getElementById('datetime').value;
+            if (datetime) {
+                fetch('http://192.168.137.18:5000/sync_time', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ datetime })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Time sync success:', data);
+                    alert('同步成功');
+                })
+                .catch((error) => {
+                    console.error('Error syncing time:', error);
+                    alert('同步失败: ' + error);
+                });
+            } else {
+                alert('请选择一个时间');
+            }
+        }
+
+        function startRecording() {
+            const duration = document.getElementById('recording-time').value * 60; // 将分钟转换为秒
+            fetch('http://192.168.137.18:5000/start_recording', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ duration })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Recording started:', data);
+                updateRecordingStatus();
+            })
+            .catch((error) => {
+                console.error('Error starting recording:', error);
+            });
+        }
+
+        function stopRecording() {
+            fetch('http://192.168.137.18:5000/stop_recording', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Recording stopped:', data);
+                updateRecordingStatus();
+            })
+            .catch((error) => {
+                console.error('Error stopping recording:', error);
+            });
+        }
+
+        function updateRecordingStatus() {
+            fetch('http://192.168.137.18:5000/recording_status')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('recording-status').innerText = `录制状态: ${data.status}`;
+                    document.getElementById('start-recording').disabled = data.status === '录制中';
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                });
+        }
+
+        function shutdown() {
+            fetch('http://192.168.137.18:5000/shutdown', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Shutdown initiated:', data);
+            })
+            .catch((error) => {
+                console.error('Error shutting down:', error);
+            });
+        }
+
+        function reboot() {
+            fetch('http://192.168.137.18:5000/reboot', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Reboot initiated:', data);
+            })
+            .catch((error) => {
+                console.error('Error rebooting:', error);
+            });
+        }
+
+        // 初始状态更新
+        updateStatus();
+        getCurrentTime();
+        updateRecordingStatus();
+        // 初始化码率选项
+        updateBitrateOptions('1');
+        updateBitrateOptions('2');
+        // 每隔一秒更新状态
+        setInterval(updateStatus, 1000);
+        setInterval(getCurrentTime, 1000);
+        setInterval(updateRecordingStatus, 1000);
+    </script>
+</body>
+</html>

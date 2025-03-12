@@ -1,0 +1,28 @@
+SettingInterface, #scrollWidget {
+    background-color: transparent;
+}
+
+QScrollArea {
+    border: none;
+    background-color: transparent;
+}
+
+
+/* 标签 */
+QLabel#settingLabel {
+    font: 33px 'Microsoft YaHei Light';
+    background-color: transparent;
+    color: white;
+}
+
+QLabel#rxTextLabel {
+    font: 23px 'Microsoft YaHei Light';
+    background-color: transparent;
+    color: white;
+}
+
+QLabel#txTextLabel {
+    font: 23px 'Microsoft YaHei Light';
+    background-color: transparent;
+    color: white;
+}

@@ -114,10 +114,11 @@
         <label for="datetime">上位机时间:</label>
         <input type="datetime-local" id="datetime" readonly>
         <button onclick="syncTime()">同步时间</button>
+        <button id="sync-time-serial" onclick="syncTimeSerial()">同步时间(串口)</button>
     </div>
     <div class="controls">
         <button onclick="shutdown()">关机</button>
-        <button onclick="reboot()">重启</button>
+        <button id="shutdown-serial" onclick="shutdownSerial()">关机(串口)</button>
     </div>
     <script>
         const bitrateOptions = {
@@ -272,6 +273,21 @@
             } else {
                 alert('请选择一个时间');
             }
+        }
+
+        function syncTimeSerial() {
+            const datetime = document.getElementById('datetime').value;
+            if (datetime) {
+                const message = JSON.stringify({ command: "sync_time", datetime });
+                sendToQtSerialPort(message);
+            } else {
+                alert('请选择一个时间');
+            }
+        }
+
+        function shutdownSerial() {
+            const message = JSON.stringify({ command: "shutdown" });
+            sendToQtSerialPort(message);
         }
 
         function startRecordingWlan() {

@@ -15,6 +15,7 @@ from common.signal_bus import signalBus
 from SettingUI import SettingInterface
 
 from WebPage import WebViewer
+from ReplayPage import ReplayViwer
 from ffmpeg_stats import FFmpegStatsApp
 
 # Window class inherits from FluentWindow and serves as the main application window
@@ -27,6 +28,7 @@ class Window(FluentWindow):
 
         # create sub interface
         self.mainWindow = WebViewer(self)
+        self.replayWindow = ReplayViwer(self)
         self.settingInterface = SettingInterface(self)
 
         signalBus.switchToSampleCard.connect(self.switchToSample)
@@ -35,6 +37,7 @@ class Window(FluentWindow):
 
     def initNavigation(self):
         self.addSubInterface(self.mainWindow, FIF.CONNECT, '主界面', NavigationItemPosition.SCROLL)
+        self.addSubInterface(self.replayWindow, FIF.PLAY, '回放', NavigationItemPosition.SCROLL)
         # 页面刷新按钮
         self.navigationInterface.addItem(
             routeKey='refreshWebPage',

@@ -42,10 +42,10 @@ class FFmpegStatsApp:
     def run_ffmpeg(self, stream_url, stats_dict):
         while True:
             try:
-                # 发送GET请求到目标IP的8889端口
+                # 发送GET请求到目标IP的10033端口
                 target_ip = stream_url.split('/')[2].split(':')[0]
                 try:
-                    requests.get(f"http://{target_ip}:8889")
+                    requests.get(f"http://{target_ip}:10033")
                 except requests.ConnectionError:
                     time.sleep(1)
                     continue
@@ -77,7 +77,7 @@ class FFmpegStatsApp:
             time.sleep(1)
 
     def start(self):
-        threading.Thread(target=self.run_ffmpeg, args=("rtsp://192.168.137.18:8554/stream1", self.stream1_stats), daemon=True).start()
+        threading.Thread(target=self.run_ffmpeg, args=("rtsp://192.168.1.15:10033/stream1", self.stream1_stats), daemon=True).start()
         threading.Thread(target=self.run_ffmpeg, args=("rtsp://localhost:8554/stream2", self.stream2_stats), daemon=True).start()
         self.app.run(debug=True, use_reloader=False, port=6060, host="0.0.0.0")
 

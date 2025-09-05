@@ -70,7 +70,7 @@
 <body>
     <h2>回放文件列表</h2>
     <div class="video-container">
-        <iframe src="http://192.168.137.18:8889/replay/" style="width:960px;height:540px;border:none;"></iframe>
+        <iframe src="http://192.168.1.15:10033/replay/" style="width:960px;height:540px;border:none;"></iframe>
         <div class="play-controls">
             <label for="play-resolution">分辨率:</label>
             <select id="play-resolution" onchange="updatePlayBitrateOptions()">
@@ -165,7 +165,7 @@
         }
 
         function fetchFileList() {
-            fetch('http://192.168.137.18:5000/data')
+            fetch('http://192.168.1.15:5000/data')
                 .then(response => response.json())
                 .then(data => {
                     const errorDiv = document.getElementById('error-msg');
@@ -232,7 +232,7 @@
             }
             const resolution = document.getElementById('play-resolution').value;
             const bitrate = document.getElementById('play-bitrate').value;
-            fetch('http://192.168.137.18:5000/replay', {
+            fetch('http://192.168.1.15:5000/replay', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

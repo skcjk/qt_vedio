@@ -55,7 +55,7 @@
 <body>
     <div class="iframe-container">
         <div class="control-group">
-            <iframe src="http://192.168.137.18:8889/stream1/"></iframe>
+            <iframe src="http://192.168.1.15:10033/stream1/"></iframe>
             <div class="controls">
                 <label for="resolution1">网络通信 分辨率:</label>
                 <select id="resolution1" onchange="updateBitrateOptions('1')">
@@ -143,7 +143,7 @@
         }
 
         function updateStatus() {
-            fetch('http://192.168.137.18:5000/status')
+            fetch('http://192.168.1.15:5000/status')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('ffmpeg-status1').innerText = `FFmpeg 状态: ${data.stream1}`;
@@ -192,7 +192,7 @@
             } else {
                 const resolution = document.getElementById('resolution1').value;
                 const bitrate = document.getElementById('bitrate1').value;
-                fetch(`http://192.168.137.18:5000/start/${stream}`, {
+                fetch(`http://192.168.1.15:5000/start/${stream}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -215,7 +215,7 @@
                 const message = JSON.stringify({ command: "stop" });
                 sendToQtSerialPort(message);
             } else {
-                fetch(`http://192.168.137.18:5000/stop/${stream}`, {
+                fetch(`http://192.168.1.15:5000/stop/${stream}`, {
                     method: 'POST'
                 })
                 .then(response => response.json())
@@ -254,7 +254,7 @@
         function syncTime() {
             const datetime = document.getElementById('datetime').value;
             if (datetime) {
-                fetch('http://192.168.137.18:5000/sync_time', {
+                fetch('http://192.168.1.15:5000/sync_time', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -292,7 +292,7 @@
 
         function startRecordingWlan() {
             const duration = document.getElementById('recording-time').value * 60; // 将分钟转换为秒
-            fetch('http://192.168.137.18:5000/start_recording', {
+            fetch('http://192.168.1.15:5000/start_recording', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -310,7 +310,7 @@
         }
 
         function stopRecordingWlan() {
-            fetch('http://192.168.137.18:5000/stop_recording', {
+            fetch('http://192.168.1.15:5000/stop_recording', {
                 method: 'POST'
             })
             .then(response => response.json())
@@ -335,7 +335,7 @@
         }
 
         function updateRecordingStatus() {
-            fetch('http://192.168.137.18:5000/recording_status')
+            fetch('http://192.168.1.15:5000/recording_status')
                 .then(response => response.json())
                 .then(data => {
                     document.getElementById('recording-status').innerText = `录制状态: ${data.status}`;
@@ -348,7 +348,7 @@
         }
 
         function shutdown() {
-            fetch('http://192.168.137.18:5000/shutdown', {
+            fetch('http://192.168.1.15:5000/shutdown', {
                 method: 'POST'
             })
             .then(response => response.json())
@@ -361,7 +361,7 @@
         }
 
         function reboot() {
-            fetch('http://192.168.137.18:5000/reboot', {
+            fetch('http://192.168.1.15:5000/reboot', {
                 method: 'POST'
             })
             .then(response => response.json())

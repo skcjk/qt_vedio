@@ -16,7 +16,7 @@ from SettingUI import SettingInterface
 
 from WebPage import WebViewer
 from ReplayPage import ReplayViwer
-from ffmpeg_stats import FFmpegStatsApp
+from flaskThread import FFmpegStatsApp
 
 # Window class inherits from FluentWindow and serves as the main application window
 class Window(FluentWindow):

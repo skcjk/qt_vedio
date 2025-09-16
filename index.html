@@ -9,45 +9,139 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #f0f4f8 0%, #e0e7ef 100%);
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            color: #222;
         }
         .iframe-container {
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             width: 100%;
-        }
-        iframe {
-            width: 100%;
-            height: 800px;
-            margin: 10px;
-        }
-        .controls {
-            display: flex;
-            justify-content: center;
-            width: 100%;
-            margin-top: 20px;
+            margin-top: 40px;
+            gap: 12px;
         }
         .control-group {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 48%;
+            width: 49%;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.05);
+            padding: 18px 10px 12px 10px;
+            transition: box-shadow 0.2s;
         }
-        .control-group .controls {
-            justify-content: center;
+        .control-group:hover {
+            box-shadow: 0 6px 18px rgba(0,0,0,0.11), 0 1.5px 4px rgba(0,0,0,0.08);
+        }
+        .iframe-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 比例 */
+            margin-bottom: 18px;
+        }
+        iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 12px;
+            background: #e9eef3;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 0;
         }
         .status {
-            margin-top: 20px;
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 1.08em;
+            font-weight: 500;
+            color: #3a7afe;
         }
-        .recording-controls {
+        .ffmpeg-details {
+            font-size: 0.98em;
+            color: #666;
+            background: #f5f7fa;
+            border-radius: 8px;
+            padding: 6px 12px;
+            margin-bottom: 8px;
+        }
+        .controls {
             display: flex;
-            align-items: center;
-            margin-top: 20px;
+            justify-content: center;
+            width: 100%;
+            margin-top: 36px;
         }
-        .recording-controls label,
-        .recording-controls input,
-        .recording-controls button {
-            margin-right: 10px;
-            height: 30px;
+        button {
+            background: linear-gradient(90deg, #3a7afe 0%, #4f8cff 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 36px;
+            font-size: 1.15em;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(58,122,254,0.08);
+            transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+        }
+        button:hover {
+            background: linear-gradient(90deg, #2e6be6 0%, #3a7afe 100%);
+            box-shadow: 0 4px 16px rgba(58,122,254,0.13);
+            transform: translateY(-2px) scale(1.03);
+        }
+        /* Switch 开关样式 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.10);
+        }
+        .switch input:checked + .slider {
+            background-color: #3a7afe;
+        }
+        .switch input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+        @media (max-width: 900px) {
+            .iframe-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+                width: 98%;
+            }
+            .control-group {
+                width: 98%;
+            }
         }
     </style>
     <script src="qrc:///qtwebchannel/qwebchannel.js"></script>
@@ -55,336 +149,346 @@
 <body>
     <div class="iframe-container">
         <div class="control-group">
-            <iframe src="http://192.168.1.15:10033/stream1/"></iframe>
-            <div class="controls">
-                <label for="resolution1">网络通信 分辨率:</label>
-                <select id="resolution1" onchange="updateBitrateOptions('1')">
-                    <option value="1920x1080">1920x1080(16:9,硬件加速)</option>
-                    <option value="1280x720">1280x720(16:9,硬件加速)</option>
-                </select>
-                <label for="bitrate1">码率:</label>
-                <select id="bitrate1">
-                    <!-- 码率选项将由JavaScript更新 -->
-                </select>
-                <button id="start1" onclick="startFFmpeg('stream1')">启动</button>
-                <button onclick="stopFFmpeg('stream1')">停止</button>
+            <div style="font-size:1.25em;font-weight:600;color:#3a7afe;margin-bottom:10px;">光通信</div>
+            <div class="iframe-wrapper">
+                <iframe src="http://127.0.0.1:8889/stream1/"></iframe>
             </div>
             <div class="status">
-                <p id="ffmpeg-status1">FFmpeg 状态: 未知</p>
+                <p id="ffmpeg-status1" style="display:inline;">FFmpeg 状态: 未知</p>
+                <span style="margin-left:24px;color:#faad14;font-weight:500;" id="device-status1">设备通信状态：未知</span>
             </div>
             <div class="ffmpeg-details">
-                <p>分辨率: <span id="ffmpeg-resolution1">未知</span> | 帧率: <span id="ffmpeg-fps1">未知</span> | 码率: <span id="ffmpeg-bitrate1">未知</span> kbps</p>
+                <p>分辨率: <span id="ffmpeg-resolution1">未知</span> | 码率: <span id="ffmpeg-bitrate1">未知</span> kbps</p>
+            </div>
+            <div style="display:flex;align-items:center;gap:18px;margin-top:10px;width:100%;justify-content:center;">
+                <button style="width:240px;" onclick="startNegotiation()">自协商开始</button>
+                <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+                    <span class="switch">
+                        <input type="checkbox" id="adaptive-switch">
+                        <span class="slider"></span>
+                    </span>
+                    <span style="font-size:1em;color:#3a7afe;font-weight:500;">自适应开关</span>
+                </label>
             </div>
         </div>
         <div class="control-group">
-            <iframe src="http://127.0.0.1:8889/stream2/"></iframe>
-            <div class="controls">
-                <label for="resolution2">串口通信 分辨率:</label>
-                <select id="resolution2" onchange="updateBitrateOptions('2')">
-                    <option value="320x180">320x180(16:9,硬件加速)</option>
-                    <option value="320x240">320x240(4:3,无加速,不推荐)</option>
-                    <option value="256x144">256x144(16:9,无加速,不推荐)</option>
-                    <option value="256x128">256x128(2:1,无加速,不推荐)</option>
-                </select>
-                <label for="bitrate2">码率:</label>
-                <select id="bitrate2">
-                    <!-- 码率选项将由JavaScript更新 -->
-                </select>
-                <button id="start2" onclick="startFFmpeg('stream2')">启动</button>
-                <button onclick="stopFFmpeg('stream2')">停止</button>
+            <div style="font-size:1.25em;font-weight:600;color:#3a7afe;margin-bottom:10px;">声通信</div>
+            <div class="iframe-wrapper">
+                <iframe src="http://127.0.0.1:8889/stream2/"></iframe>
             </div>
             <div class="status">
-                <p id="ffmpeg-status2">FFmpeg 状态: 未知</p>
+                <p id="ffmpeg-status2" style="display:inline;">FFmpeg 状态: 未知</p>
+                <span style="margin-left:24px;color:#faad14;font-weight:500;" id="handshake-status2">握手状态：未知</span>
             </div>
             <div class="ffmpeg-details">
-                <p>分辨率: <span id="ffmpeg-resolution2">未知</span> | 帧率: <span id="ffmpeg-fps2">未知</span> | 码率: <span id="ffmpeg-bitrate2">未知</span> kbps</p>
+                <p>分辨率: <span id="ffmpeg-resolution2">未知</span> | 码率: <span id="ffmpeg-bitrate2">未知</span> kbps</p>
+            </div>
+            <div style="display:flex;align-items:center;justify-content:center;margin-top:10px;width:100%;">
+                <button style="width:240px;" onclick="startTransmission()">传输启动</button>
             </div>
         </div>
     </div>
-    <div class="recording-controls">
-        <label for="recording-time">录制时间间隔(分钟):</label>
-        <input type="number" id="recording-time" value="1">
-        <button id="start-recording-wlan" onclick="startRecordingWlan()">启动录制(网口)</button>
-        <button id="start-recording-serial" onclick="startRecordingSerial()">启动录制(串口)</button>
-        <button id="stop-recording-wlan" onclick="stopRecordingWlan()">停止录制(网口)</button>
-        <button id="stop-recording-serial" onclick="stopRecordingSerial()">停止录制(串口)</button>
-        <p id="recording-status">录制状态: 未知</p>
-    </div>
-    <div class="controls">
-        <label for="datetime">上位机时间:</label>
-        <input type="datetime-local" id="datetime" readonly>
-        <button onclick="syncTime()">同步时间</button>
-        <button id="sync-time-serial" onclick="syncTimeSerial()">同步时间(串口)</button>
-    </div>
     <div class="controls">
         <button onclick="shutdown()">关机</button>
-        <button id="shutdown-serial" onclick="shutdownSerial()">关机(串口)</button>
     </div>
     <script>
-        const bitrateOptions = {
-            '1920x1080': ['8M', '4M'],
-            '1280x720': ['2M', '1M'],
-            '320x180': ['80k', '40k'],
-            '320x240': ['80k', '40k'],
-            '256x144': ['80k', '40k', '20k', '10k'],
-            '256x128': ['80k', '40k', '20k', '10k']
-        };
-
-        function updateBitrateOptions(stream) {
-            const resolution = document.getElementById(`resolution${stream}`).value;
-            const bitrateSelect = document.getElementById(`bitrate${stream}`);
-            bitrateSelect.innerHTML = '';
-            bitrateOptions[resolution].forEach(bitrate => {
-                const option = document.createElement('option');
-                option.value = bitrate;
-                option.text = bitrate;
-                bitrateSelect.add(option);
-            });
-        }
-
-        function updateStatus() {
-            fetch('http://192.168.1.15:5000/status')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('ffmpeg-status1').innerText = `FFmpeg 状态: ${data.stream1}`;
-                    document.getElementById('ffmpeg-status2').innerText = `FFmpeg 状态: ${data.stream2}`;
-                    setControlsState('1', data.stream1 === 'running');
-                    setControlsState('2', data.stream2 === 'running');
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-        }
-
-        function updateDetials() {
-            fetch('http://127.0.0.1:6060/stats')
-            .then(response => response.json())
-            .then(data => {
-                // stream1 信息更新
-                const stream1 = data.stream1 || {};
-                document.getElementById('ffmpeg-resolution1').innerText = stream1.resolution || "未知";
-                document.getElementById('ffmpeg-fps1').innerText = stream1.frame_rate || "未知";
-                document.getElementById('ffmpeg-bitrate1').innerText = stream1.bitrate || "未知";
-                
-                // stream2 信息更新
-                const stream2 = data.stream2 || {};
-                document.getElementById('ffmpeg-resolution2').innerText = stream2.resolution || "未知";
-                document.getElementById('ffmpeg-fps2').innerText = stream2.frame_rate || "未知";
-                document.getElementById('ffmpeg-bitrate2').innerText = stream2.bitrate || "未知";
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-            });
-        }
-
-        function setControlsState(stream, isRunning) {
-            document.getElementById(`resolution${stream}`).disabled = isRunning;
-            document.getElementById(`bitrate${stream}`).disabled = isRunning;
-            document.getElementById(`start${stream}`).disabled = isRunning;
-        }
-
-        function startFFmpeg(stream) {
-            if (stream === 'stream2') {
-                const resolution = document.getElementById('resolution2').value;
-                const bitrate = document.getElementById('bitrate2').value;
-                const message = JSON.stringify({ command: "start", resolution, bitrate });
-                sendToQtSerialPort(message);
-            } else {
-                const resolution = document.getElementById('resolution1').value;
-                const bitrate = document.getElementById('bitrate1').value;
-                fetch(`http://192.168.1.15:5000/start/${stream}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ resolution, bitrate })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Success:', data);
-                    updateStatus();
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-            }
-        }
-
-        function stopFFmpeg(stream) {
-            if (stream === 'stream2') {
-                const message = JSON.stringify({ command: "stop" });
-                sendToQtSerialPort(message);
-            } else {
-                fetch(`http://192.168.1.15:5000/stop/${stream}`, {
-                    method: 'POST'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Success:', data);
-                    updateStatus();
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
-            }
-        }
-
-        function sendToQtSerialPort(message) {
+        function sendToQtUDPInfoPortSuccess(message) {
             if (window.qt && window.qt.webChannelTransport) {
                 new QWebChannel(window.qt.webChannelTransport, function(channel) {
-                    channel.objects.serialPort.send(message);
+                    channel.objects.udpPort.sendSuccess(JSON.stringify(message));
                 });
             } else {
-                console.error('Qt WebChannel is not available.');
+                alert('Qt WebChannel is not available.');
             }
         }
 
-        function getCurrentTime() {
-            const now = new Date();
-            const year = now.getFullYear();
-            const month = String(now.getMonth() + 1).padStart(2, '0');
-            const day = String(now.getDate()).padStart(2, '0');
-            const hours = String(now.getHours()).padStart(2, '0');
-            const minutes = String(now.getMinutes()).padStart(2, '0');
-            const seconds = String(now.getSeconds()).padStart(2, '0');
-            const datetimeLocal = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
-            document.getElementById('datetime').value = datetimeLocal;
-        }
-
-        function syncTime() {
-            const datetime = document.getElementById('datetime').value;
-            if (datetime) {
-                fetch('http://192.168.1.15:5000/sync_time', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ datetime })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    console.log('Time sync success:', data);
-                    alert('同步成功');
-                })
-                .catch((error) => {
-                    console.error('Error syncing time:', error);
-                    alert('同步失败: ' + error);
+        function sendToQtUDPInfoPortFailure(message) {
+            if (window.qt && window.qt.webChannelTransport) {
+                new QWebChannel(window.qt.webChannelTransport, function(channel) {
+                    channel.objects.udpPort.sendFailure(JSON.stringify(message));
                 });
             } else {
-                alert('请选择一个时间');
+                alert('Qt WebChannel is not available.');
             }
         }
 
-        function syncTimeSerial() {
-            const datetime = document.getElementById('datetime').value;
-            if (datetime) {
-                const message = JSON.stringify({ command: "sync_time", datetime });
-                sendToQtSerialPort(message);
-            } else {
-                alert('请选择一个时间');
-            }
-        }
-
-        function shutdownSerial() {
-            const message = JSON.stringify({ command: "shutdown" });
-            sendToQtSerialPort(message);
-        }
-
-        function startRecordingWlan() {
-            const duration = document.getElementById('recording-time').value * 60; // 将分钟转换为秒
-            fetch('http://192.168.1.15:5000/start_recording', {
+        function startNegotiation() {
+            const payload = {
+                ip: '127.0.0.1',
+                port: 12345,
+                hex: '48 59 43 4C 11 03 09 1C 61'
+            };
+            fetch('http://127.0.0.1:6060/send_udp', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ duration })
+                body: JSON.stringify(payload)
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Recording started:', data);
-                updateRecordingStatus();
+                if (data.status === 'success') {
+                    sendToQtUDPInfoPortSuccess(payload);
+                } else {
+                    sendToQtUDPInfoPortFailure(payload, '发送失败: ' + (data.msg || '未知错误'));
+                }
             })
-            .catch((error) => {
-                console.error('Error starting recording:', error);
+            .catch(err => {
+                sendToQtUDPInfoPortFailure(payload, '请求异常: ' + err);
             });
         }
 
-        function stopRecordingWlan() {
-            fetch('http://192.168.1.15:5000/stop_recording', {
-                method: 'POST'
+        function startTransmission() {
+            const payload = {
+                ip: '127.0.0.1',
+                port: 12345,
+                hex: '48 59 43 4C 13 03 09 BD A1'
+            };
+            fetch('http://127.0.0.1:6060/send_udp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Recording stopped:', data);
-                updateRecordingStatus();
+                if (data.status === 'success') {
+                    sendToQtUDPInfoPortSuccess(payload);
+                } else {
+                    sendToQtUDPInfoPortFailure(payload, '发送失败: ' + (data.msg || '未知错误'));
+                }
             })
-            .catch((error) => {
-                console.error('Error stopping recording:', error);
+            .catch(err => {
+                sendToQtUDPInfoPortFailure(payload, '请求异常: ' + err);
             });
-        }
-
-        function startRecordingSerial() {
-            const duration = document.getElementById('recording-time').value * 60; // 将分钟转换为秒
-            const message = JSON.stringify({ command: "start_recording", duration });
-            sendToQtSerialPort(message);
-        }
-
-        function stopRecordingSerial() {
-            const message = JSON.stringify({ command: "stop_recording" });
-            sendToQtSerialPort(message);
-        }
-
-        function updateRecordingStatus() {
-            fetch('http://192.168.1.15:5000/recording_status')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('recording-status').innerText = `录制状态: ${data.status}`;
-                    document.getElementById('start-recording-wlan').disabled = data.status === '录制中';
-                    document.getElementById('start-recording-serial').disabled = data.status === '录制中';
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                });
         }
 
         function shutdown() {
-            fetch('http://192.168.1.15:5000/shutdown', {
-                method: 'POST'
+            // 用于收集两个请求的结果
+            let results = [];
+            let finished = 0;
+
+            function handleResult(payload, status, msg) {
+                results.push({
+                    ip: payload.ip,
+                    port: payload.port,
+                    hex: payload.hex,
+                    status: status,
+                    msg: msg || ''
+                });
+                finished++;
+                if (finished === 2) {
+                    // 两次都完成后，统一上报
+                    if (results.every(r => r.status === 'success')) {
+                        sendToQtUDPInfoPortSuccess(results);
+                    } else {
+                        sendToQtUDPInfoPortFailure(results);
+                    }
+                }
+            }
+
+            const payload1 = {
+                ip: '127.0.0.1',
+                port: 12345,
+                hex: '48 59 43 4C 10 05 09 4E 01'
+            };
+            fetch('http://127.0.0.1:6060/send_udp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload1)
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Shutdown initiated:', data);
+                handleResult(payload1, data.status, data.msg);
             })
-            .catch((error) => {
-                console.error('Error shutting down:', error);
+            .catch(err => {
+                handleResult(payload1, 'error', err);
             });
-        }
 
-        function reboot() {
-            fetch('http://192.168.1.15:5000/reboot', {
-                method: 'POST'
+            const payload2 = {
+                ip: '127.0.0.1',
+                port: 12345
+                ,
+                hex: '48 59 43 4C 10 05 09 4E 01'
+            };
+            fetch('http://127.0.0.1:6060/send_udp', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload2)
             })
             .then(response => response.json())
             .then(data => {
-                console.log('Reboot initiated:', data);
+                handleResult(payload2, data.status, data.msg);
             })
-            .catch((error) => {
-                console.error('Error rebooting:', error);
+            .catch(err => {
+                handleResult(payload2, 'error', err);
             });
         }
 
-        // 初始状态更新
-        updateStatus();
-        getCurrentTime();
-        updateRecordingStatus();
-        // 初始化码率选项
-        updateBitrateOptions('1');
-        updateBitrateOptions('2');
-        // 每隔一秒更新状态
-        setInterval(updateStatus, 1000);
-        setInterval(updateDetials, 1000);
-        setInterval(getCurrentTime, 1000);
-        setInterval(updateRecordingStatus, 1000);
+        document.addEventListener('DOMContentLoaded', function() {
+            const adaptiveSwitch = document.getElementById('adaptive-switch');
+            if (adaptiveSwitch) {
+                adaptiveSwitch.addEventListener('change', function() {
+                    const isChecked = adaptiveSwitch.checked;
+                    const payload = {
+                        ip: '127.0.0.1',
+                        port: 12345,
+                        hex: isChecked
+                            ? '48 59 43 4C 11 04 0A 00 D1 F8'
+                            : '48 59 43 4C 11 04 0A 01 10 38'
+                    };
+                    fetch('http://127.0.0.1:6060/send_udp', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(payload)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            sendToQtUDPInfoPortSuccess(payload);
+                        } else {
+                            sendToQtUDPInfoPortFailure(payload, '发送失败: ' + (data.msg || '未知错误'));
+                        }
+                    })
+                    .catch(err => {
+                        sendToQtUDPInfoPortFailure(payload, '请求异常: ' + err);
+                    });
+                });
+            }
+        });
+
+        function updateFFmpegStatus() {
+            fetch('http://127.0.0.1:6060/ffmpeg_status')
+                .then(response => response.json())
+                .then(data => {
+                    // 更新左侧
+                    const status1 = data.ffmpeg_process1 === 'running' ? '运行中' : '已停止';
+                    document.getElementById('ffmpeg-status1').textContent = 'FFmpeg 状态: ' + status1;
+                    // 更新右侧
+                    const status2 = data.ffmpeg_process2 === 'running' ? '运行中' : '已停止';
+                    document.getElementById('ffmpeg-status2').textContent = 'FFmpeg 状态: ' + status2;
+                })
+                .catch(() => {
+                    document.getElementById('ffmpeg-status1').textContent = 'FFmpeg 状态: 未知';
+                    document.getElementById('ffmpeg-status2').textContent = 'FFmpeg 状态: 未知';
+                });
+        }
+
+        // 记录上次的码率
+        let lastBitrate1 = null;
+        let lastBitrate2 = null;
+
+        function updateDeviceStatus() {
+            fetch('http://127.0.0.1:6060/status_feedback')
+                .then(response => response.json())
+                .then(data => {
+                    // 设备通信状态（左侧）
+                    document.getElementById('device-status1').textContent = '设备通信状态：' + data.comm_status_1_str;
+                    // 左侧码率
+                    document.getElementById('ffmpeg-bitrate1').textContent = data.bitrate_1_value;
+                    // 分辨率1
+                    if (data.resolution_1 && typeof data.resolution_1.width === 'number' && typeof data.resolution_1.height === 'number') {
+                        if (data.resolution_1.width === -1 && data.resolution_1.height === -1) {
+                            document.getElementById('ffmpeg-resolution1').textContent = '未知';
+                        } else {
+                            document.getElementById('ffmpeg-resolution1').textContent = data.resolution_1.width + '×' + data.resolution_1.height;
+                        }
+                    } else {
+                        document.getElementById('ffmpeg-resolution1').textContent = '未知';
+                    }
+                    // 检查左侧码率变化，自动重启ffmpeg_process1
+                    if (lastBitrate1 !== null && data.bitrate_1_value !== lastBitrate1) {
+                        fetch('http://127.0.0.1:6060/restart_ffmpeg', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ target: 'ffmpeg_process1' })
+                        });
+                    }
+                    lastBitrate1 = data.bitrate_1_value;
+
+                    // 握手状态（右侧）
+                    document.getElementById('handshake-status2').textContent = '握手状态：' + data.comm_status_2_str;
+                    // 右侧码率
+                    document.getElementById('ffmpeg-bitrate2').textContent = data.bitrate_2_value;
+                    // 分辨率2
+                    if (data.resolution_2 && typeof data.resolution_2.width === 'number' && typeof data.resolution_2.height === 'number') {
+                        if (data.resolution_2.width === -1 && data.resolution_2.height === -1) {
+                            document.getElementById('ffmpeg-resolution2').textContent = '未知';
+                        } else {
+                            document.getElementById('ffmpeg-resolution2').textContent = data.resolution_2.width + '×' + data.resolution_2.height;
+                        }
+                    } else {
+                        document.getElementById('ffmpeg-resolution2').textContent = '未知';
+                    }
+                    // 检查右侧码率变化，自动重启ffmpeg_process2
+                    if (lastBitrate2 !== null && data.bitrate_2_value !== lastBitrate2) {
+                        fetch('http://127.0.0.1:6060/restart_ffmpeg', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ target: 'ffmpeg_process2' })
+                        });
+                    }
+                    lastBitrate2 = data.bitrate_2_value;
+                })
+                .catch(() => {
+                    document.getElementById('device-status1').textContent = '设备通信状态：未知';
+                    document.getElementById('ffmpeg-bitrate1').textContent = '未知';
+                    document.getElementById('ffmpeg-resolution1').textContent = '未知';
+                    document.getElementById('handshake-status2').textContent = '握手状态：未知';
+                    document.getElementById('ffmpeg-bitrate2').textContent = '未知';
+                    document.getElementById('ffmpeg-resolution2').textContent = '未知';
+                });
+        }
+
+        function checkAndResetFFmpegRestartCount() {
+            fetch('http://127.0.0.1:6060/ffmpeg_restart_count')
+                .then(response => response.json())
+                .then(data => {
+                    // 检查左侧ffmpeg重启计数
+                    if (data.ffmpeg_process1_restart_time > 1) {
+                        fetch('http://127.0.0.1:6060/reset_ffmpeg_restart_count', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ target: 'ffmpeg_process1' })
+                        }).then(() => {
+                            // 刷新左侧iframe
+                            const iframe1 = document.querySelector('iframe[src*="stream1"]');
+                            if (iframe1) iframe1.src = iframe1.src;
+                        });
+                    }
+
+                    // 检查右侧ffmpeg重启计数
+                    if (data.ffmpeg_process2_restart_time > 1) {
+                        fetch('http://127.0.0.1:6060/reset_ffmpeg_restart_count', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ target: 'ffmpeg_process2' })
+                        }).then(() => {
+                            // 刷新右侧iframe
+                            const iframe2 = document.querySelector('iframe[src*="stream2"]');
+                            if (iframe2) iframe2.src = iframe2.src;
+                        });
+                    }
+                })
+                .catch(() => {});
+        }
+
+        setInterval(updateFFmpegStatus, 1000);
+        setInterval(updateDeviceStatus, 1000);
+        setInterval(checkAndResetFFmpegRestartCount, 1000);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            updateFFmpegStatus();
+            updateDeviceStatus();
+            checkAndResetFFmpegRestartCount();
+        });
     </script>
 </body>
 </html>

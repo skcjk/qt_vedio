@@ -265,6 +265,10 @@
         }
 
         function shutdown() {
+            // 弹出确认提示（自定义标题和默认选项）
+            if (!window.confirm('【关机确认】\n确定要关机吗？关机后需要重新上电重新启动设备。\n\n点击“确定”执行关机，点击“取消”放弃操作。')) {
+                return;
+            }
             // 用于收集两个请求的结果
             let results = [];
             let finished = 0;

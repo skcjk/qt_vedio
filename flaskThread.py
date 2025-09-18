@@ -6,6 +6,7 @@ import os
 import threading
 import time
 import crcmod
+import random
 
 global comm_status_1, comm_status_2, bitrate_1, bitrate_2, resolution_1, resolution_2
 comm_status_1 = -1
@@ -14,6 +15,16 @@ bitrate_1 = -1
 bitrate_2 = -1
 resolution_1 = {"width": -1, "height": -1}
 resolution_2 = {"width": -1, "height": -1}
+
+def addError(data):
+    # 以0.1%概率对每一个字节随机修改为任意值
+    if len(data) > 0:
+        data = bytearray(data)
+        for i in range(len(data)):
+            if random.random() < 0.005:
+                 data[i] = random.randint(0, 255)
+        data = bytes(data)
+    return data
 
 class FlaskThread:
     def __init__(self):
@@ -45,7 +56,7 @@ class FlaskThread:
             time.sleep(1)
 
     def reconstructStream2FromH264(self):
-        """ Start ffmpeg process to push stream to rtsp, with daemon restart """
+        """ Start ffmpeg process to save stream to record dir with datetime filename, with daemon restart """
         while True:
             if self.ffmpeg_process2 is None or self.ffmpeg_process2.poll() is not None:
                 startupinfo = subprocess.STARTUPINFO()
@@ -53,25 +64,25 @@ class FlaskThread:
                 ffmpeg_path = os.path.join(os.getcwd(), "ffmpeg", "bin", "ffmpeg.exe")
                 self.ffmpeg_process2 = subprocess.Popen([
                     ffmpeg_path, 
-                    '-re',              
+                    '-re',
                     '-f', 'h264', 
                     '-i', 'pipe:0',
-                    '-c:v', 'copy', 
-                    '-rtsp_transport', 'tcp', 
+                    '-c:v', 'libvpx',  # 重新编码为vp8
+                    '-b:v', '8M',      # 码率8M
                     '-f', 'rtsp',
-                    'rtsp://localhost:8554/stream2',
-                ], stdin=subprocess.PIPE, startupinfo=startupinfo, creationflags=subprocess.CREATE_NO_WINDOW)
+                    'rtsp://localhost:8554/stream2'
+                ], stdin=subprocess.PIPE)
                 self.ffmpeg_process2_restart_time += 1
             time.sleep(1)
 
-    def receiveUDPDataToReconstruct1(self, buffer_size=4096):
+    def receiveUDPDataToReconstruct1(self, buffer_size=1024 * 1024):
         while True:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 sock.bind(('0.0.0.0', 10002))
                 while True:
-                    data, addr = sock.recvfrom(buffer_size)
                     if self.ffmpeg_process1 and self.ffmpeg_process1.stdin:
+                        data, addr = sock.recvfrom(buffer_size)
                         self.ffmpeg_process1.stdin.write(data)
             except Exception as e:
                 time.sleep(1)
@@ -81,14 +92,15 @@ class FlaskThread:
                 except:
                     pass
 
-    def receiveUDPDataToReconstruct2(self, buffer_size=4096):
+    def receiveUDPDataToReconstruct2(self, buffer_size=1024 * 1024):
         while True:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
                 sock.bind(('0.0.0.0', 10012))
                 while True:
-                    data, addr = sock.recvfrom(buffer_size)
                     if self.ffmpeg_process2 and self.ffmpeg_process2.stdin:
+                        data, addr = sock.recvfrom(buffer_size)
+                        # data = addError(data)  # 引入随机误码
                         self.ffmpeg_process2.stdin.write(data)
             except Exception as e:
                 time.sleep(1)
@@ -312,7 +324,6 @@ class FlaskThread:
         threading.Thread(target=self.receiveUDPDataToReconstruct2, daemon=True).start()
         threading.Thread(target=self.receiveUDPCommandFrom1, daemon=True).start()
         threading.Thread(target=self.receiveUDPCommandFrom2, daemon=True).start()
-        # 新增分辨率线程
         threading.Thread(target=self.update_resolution_1, daemon=True).start()
         threading.Thread(target=self.update_resolution_2, daemon=True).start()
         self.app.run(debug=True, use_reloader=False, port=6060, host="0.0.0.0")

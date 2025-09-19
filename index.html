@@ -214,8 +214,8 @@
 
         function startNegotiation() {
             const payload = {
-                ip: '127.0.0.1',
-                port: 12345,
+                ip: '192.168.1.11',
+                port: 10001,
                 hex: '48 59 43 4C 11 03 09 1C 61'
             };
             fetch('http://127.0.0.1:6060/send_udp', {
@@ -240,8 +240,8 @@
 
         function startTransmission() {
             const payload = {
-                ip: '127.0.0.1',
-                port: 12345,
+                ip: '192.168.1.13',
+                port: 10011,
                 hex: '48 59 43 4C 13 03 09 BD A1'
             };
             fetch('http://127.0.0.1:6060/send_udp', {
@@ -293,8 +293,8 @@
             }
 
             const payload1 = {
-                ip: '127.0.0.1',
-                port: 12345,
+                ip: '192.168.1.11',
+                port: 10001,
                 hex: '48 59 43 4C 10 05 09 4E 01'
             };
             fetch('http://127.0.0.1:6060/send_udp', {
@@ -313,9 +313,8 @@
             });
 
             const payload2 = {
-                ip: '127.0.0.1',
-                port: 12345
-                ,
+                ip: '192.168.1.13',
+                port: 10011,
                 hex: '48 59 43 4C 10 05 09 4E 01'
             };
             fetch('http://127.0.0.1:6060/send_udp', {
@@ -340,8 +339,8 @@
                 adaptiveSwitch.addEventListener('change', function() {
                     const isChecked = adaptiveSwitch.checked;
                     const payload = {
-                        ip: '127.0.0.1',
-                        port: 12345,
+                        ip: '192.168.1.11',
+                        port: 10001,
                         hex: isChecked
                             ? '48 59 43 4C 11 04 0A 00 D1 F8'
                             : '48 59 43 4C 11 04 0A 01 10 38'

@@ -71,7 +71,7 @@ class FlaskThread:
                     '-b:v', '8M',      # 码率8M
                     '-f', 'rtsp',
                     'rtsp://localhost:8554/stream2'
-                ], stdin=subprocess.PIPE)
+                ], stdin=subprocess.PIPE, startupinfo=startupinfo, creationflags=subprocess.CREATE_NO_WINDOW)
                 self.ffmpeg_process2_restart_time += 1
             time.sleep(1)
 

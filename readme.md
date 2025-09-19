@@ -1,9 +1,9 @@
 # 在conda中配置环境
 ```bash
-conda create -n gliderGUI python=3.10.14
-conda activate gliderGUI
+conda create -n qt_vedio python=3.10.14
+conda activate qt_vedio
 pip install PyQt6-Fluent-Widgets -i https://pypi.org/simple/
-pip install pyserial
+pip install ...
 ```
 # 使用pyinstaller打包
 安装pyinstaller
@@ -12,6 +12,10 @@ pip install pyinstaller
 ```
 打包
 ```bash
-pyinstaller gliderGUI.spec
+pyinstaller main.spec
 ```
-将更目录下`recouce`文件夹复制到`dist/gliderGUI/`中
+将根目录下`recouce`,`ffmpeg`文件夹和`mediamtx.exe`,`mediamtx.yml`,`index.html`文件复制到`dist/gliderGUI/`中
+
+ffmpeg下载地址：https://ffmpeg.org/download.html
+
+mediamtx下载地址：https://github.com/bluenviron/mediamtx/releases/
